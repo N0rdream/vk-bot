@@ -12,5 +12,14 @@ import configurations
 configurations.setup()
 
 app = Celery('vk_bot_prj')
+
+app.conf.beat_schedule = {
+    'add-every-30-seconds': {
+        'task': 'bot.tasks.send_hashtag_data',
+        'schedule': 4.0
+    }
+}
+
 app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
+

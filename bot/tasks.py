@@ -1,53 +1,67 @@
-import time
+import os
+import redis
 from celery import shared_task
-import requests
-from .models import Vgroup, Hashtag, History
+from .models import Hashtag, History
 from django.db.models import Q
-
-# timesleep = 9 seconds
-def send_message(user_id, access_token, api_version, message, attachment):
-    if not message and not attachment:
-        return None
-    time.sleep(2)
-    url_send_message = 'https://api.vk.com/method/messages.send'
-    params = {
-        'user_id': user_id,
-        'access_token': access_token,
-        'v': api_version
-    }
-    if message:
-        params['message'] = message
-    if attachment:
-        params['attachment'] = attachment      
-    requests.get(url_send_message, params=params)
+from celery.exceptions import Ignore
+from .parsers import parse_redis_data
+from .vk_helpers import (
+    send_execute_request, 
+    construct_vkscript_message_sender, 
+    construct_code_for_execute
+)
 
 
-@shared_task(ignore_result=True)
-def reply_to_message(user_id, access_token, api_version, group_id, hashtag):
-    hashtag = Hashtag.objects.select_related().filter(Q(name=hashtag) & Q(group__id=group_id)).first()
-    if hashtag is not None:
-        send_message(
-            user_id,
-            access_token,
-            api_version,
-            hashtag.message,
-            hashtag.attachment   
-        )
-
-
-@shared_task(ignore_result=True)
-def save_message(data, hashtag):
-    group_id = data['group_id']
-    group = Vgroup.objects.get(pk=group_id)
+@shared_task
+def store_incoming_message(message_type, date, user_id, message, hashtag):
     history = History(
-        message_type=data['message_type'],
-        date=data['date'],
-        user_id=data['user_id'],
-        message=data['message'],
-        group=group
+        message_type=message_type,
+        date=date,
+        user_id=user_id,
+        message=message
     )
-    if hashtag is not None:
-        hashtag = Hashtag.objects.filter(Q(name=hashtag) & Q(group__id=group_id)).first()
-        if hashtag is not None:
-            history.hashtag = hashtag
+    if hashtag is None:
+        history.save()
+        raise Ignore
+    match = Hashtag.objects.filter(name=hashtag).first()
+    if match is None:
+        history.save()
+        raise Ignore
+    history.hashtag = match
     history.save()
+    return {'user_id': user_id, 'date': date, 'hashtag': hashtag}
+
+@shared_task(ignore_result=True)
+def send_hashtag_data():
+    host = os.environ['CELERY_REDIS_HOST']
+    port = os.environ['CELERY_REDIS_PORT']
+    db = os.environ['CELERY_REDIS_DB']
+    access_token = os.environ['VK_GROUP_ACCESS_TOKEN']
+    api_version = os.environ['VK_API_VERSION']
+    redis_db = redis.StrictRedis(host=host, port=port, db=db, decode_responses=True)
+    parsed_data = parse_redis_data(redis_db, 25, 100, 2500)
+    if parsed_data is None:
+        raise Ignore
+    data = parsed_data['data']
+    result = []
+    for hashtag in data:
+        message, attachment = Hashtag.get_hashtag_fields(hashtag)
+        func = construct_vkscript_message_sender(
+            data[hashtag], 
+            access_token, 
+            api_version, 
+            message, 
+            attachment
+        )
+        result.append(func)
+    code = construct_code_for_execute(result)
+    send_execute_request(code, access_token, api_version)
+    for k in parsed_data['checked_keys']:
+        redis_db.delete(k)
+
+
+
+
+
+
+

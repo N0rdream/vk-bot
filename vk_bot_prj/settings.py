@@ -1,9 +1,9 @@
 import os
 from configurations import Configuration
-from . import config
 
 
 class Base(Configuration):
+    
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     INSTALLED_APPS = [
@@ -77,13 +77,18 @@ class Base(Configuration):
 
 class Hosting(Base):
 
-    config = config.load_config(os.environ['MAIN_CONFIG'])
-
-    ALLOWED_HOSTS = ['nordream.ru', 'www.nordream.ru']
+    ALLOWED_HOSTS = ['nordream.ru', 'www.nordream.ru', 'localhost']
     
-    CELERY_BROKER_URL = 'amqp://127.0.0.1:5672//'
+    CELERY_IMPORTS = ['bot.tasks']
+    CELERY_BROKER_URL = 'amqp://localhost:5672//'
+    CELERY_REDIS_HOST = os.environ['CELERY_REDIS_HOST']
+    CELERY_REDIS_PORT = os.environ['CELERY_REDIS_PORT']
+    CELERY_REDIS_DB = os.environ['CELERY_REDIS_DB']
+    CELERY_RESULT_BACKEND = f'redis://{CELERY_REDIS_HOST}:{CELERY_REDIS_PORT}/{CELERY_REDIS_DB}'
+    CELERY_RESULT_SERIALIZER = 'json'
+    CELERY_TASK_SERIALIZER = 'json'
 
-    SECRET_KEY = config['SECRET_KEY']
+    SECRET_KEY = os.environ['SECRET_KEY']
 
     DEBUG = True
 
@@ -92,10 +97,10 @@ class Hosting(Base):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': config['DB']['NAME'],
-            'USER': config['DB']['USER'],
-            'PASSWORD': config['DB']['PASSWORD'],
-            'HOST': config['DB']['HOST'],
-            'PORT': config['DB']['PORT']
+            'NAME': os.environ['BOT_DATABASE_NAME'],
+            'USER': os.environ['BOT_DATABASE_USER'],
+            'PASSWORD': os.environ['BOT_DATABASE_PASSWORD'],
+            'HOST': os.environ['BOT_DATABASE_HOST'],
+            'PORT': os.environ['BOT_DATABASE_PORT']
         }
     }
