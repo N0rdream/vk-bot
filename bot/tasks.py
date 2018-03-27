@@ -12,23 +12,18 @@ from .vk_helpers import (
 )
 
 
+@shared_task(ignore_result=True)
+def handle_message_without_hashtag(message_type, date, user_id, message):
+    History.save_message(message_type, date, user_id, message)
+
 @shared_task
-def store_incoming_message(message_type, date, user_id, message, hashtag):
-    history = History(
-        message_type=message_type,
-        date=date,
-        user_id=user_id,
-        message=message
-    )
-    if hashtag is None:
-        history.save()
+def handle_message_with_hashtag(message_type, date, user_id, message, hashtag):
+    try:
+        hashtag_obj = Hashtag.objects.get(name=hashtag)
+    except DoesNotExist:
+        History.save_message(message_type, date, user_id, message)
         raise Ignore
-    match = Hashtag.objects.filter(name=hashtag).first()
-    if match is None:
-        history.save()
-        raise Ignore
-    history.hashtag = match
-    history.save()
+    History.save_message(message_type, date, user_id, message, hashtag_obj)
     return {'user_id': user_id, 'date': date, 'hashtag': hashtag}
 
 @shared_task(ignore_result=True)
@@ -58,7 +53,6 @@ def send_hashtag_data():
     send_execute_request(code, access_token, api_version)
     for k in parsed_data['checked_keys']:
         redis_db.delete(k)
-
 
 
 

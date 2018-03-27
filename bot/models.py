@@ -31,5 +31,17 @@ class History(models.Model):
     def __str__(self):
         return self.message
 
+    @classmethod
+    def save_message(cls, message_type, date, user_id, message, hashtag_obj=None):
+        record = cls(
+            message_type=message_type,
+            date=date,
+            user_id=user_id,
+            message=message
+        )
+        if hashtag_obj is not None:
+            record.hashtag = hashtag_obj
+        record.save()
+
     class Meta:
         verbose_name_plural = 'History'
