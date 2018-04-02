@@ -4,7 +4,7 @@ from django.db import models
 class Hashtag(models.Model):
     name = models.CharField(max_length=50)
     message = models.TextField(blank=True)
-    attachment = models.CharField(max_length=50, blank=True)
+    vk_attachment_id = models.CharField(max_length=50, blank=True)
 
     def __str__(self):
         return self.name
@@ -13,35 +13,51 @@ class Hashtag(models.Model):
     def get_hashtag_fields(cls, hashtag):
         hashtag = cls.objects.select_related().filter(name=hashtag).first()
         message = hashtag.message
-        attachment = hashtag.attachment
+        vk_attachment_id = hashtag.vk_attachment_id
         if not message:
-            return None, attachment
-        if not attachment:
+            return None, vk_attachment_id
+        if not vk_attachment_id:
             return message, None
-        return message, attachment
+        return message, vk_attachment_id
 
 
 class History(models.Model):
     message_type = models.CharField(max_length=50)
-    date = models.IntegerField()
+    vk_timestamp = models.IntegerField()
     user_id = models.IntegerField()
     message = models.TextField()
     hashtag = models.ForeignKey(Hashtag, on_delete=models.SET_NULL, null=True, blank=True)
+    answered = models.BooleanField(default=False)
 
     def __str__(self):
         return self.message
 
     @classmethod
-    def save_message(cls, message_type, date, user_id, message, hashtag_obj=None):
+    def save_message(
+        cls, message_type, vk_timestamp, user_id, message, 
+        hashtag_obj=None, answered=False
+    ):
         record = cls(
             message_type=message_type,
-            date=date,
+            vk_timestamp=vk_timestamp,
             user_id=user_id,
-            message=message
+            message=message,
+            answered=answered
         )
         if hashtag_obj is not None:
             record.hashtag = hashtag_obj
         record.save()
+
+    @classmethod
+    def has_hashtag(cls, hashtag, user_id, vk_timestamp, tdelta):
+        return cls.objects.filter(
+            hashtag__name=hashtag,
+            user_id=user_id,
+            vk_timestamp__lte=vk_timestamp,
+            vk_timestamp__gte=vk_timestamp - int(tdelta) * 60,
+            answered=True
+        ).exists()
+
 
     class Meta:
         verbose_name_plural = 'History'

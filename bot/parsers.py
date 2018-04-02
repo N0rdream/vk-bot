@@ -21,13 +21,13 @@ def process_incoming_data(data):
         'secret': secret
     }
     try:
-        date = data['object']['date']
+        vk_timestamp = data['object']['date']
         user_id = data['object']['user_id']
         message = data['object']['body']
     except KeyError:
         return result
     else:
-        result['date'] = date
+        result['vk_timestamp'] = vk_timestamp
         result['message'] = message
         result['user_id'] = user_id
     return result

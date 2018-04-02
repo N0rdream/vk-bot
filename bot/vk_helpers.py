@@ -10,7 +10,10 @@ def send_execute_request(code, access_token, api_version):
     }
     return requests.get(url_execute, params=params)
 
-def construct_vkscript_message_sender(user_ids, access_token, api_version, message, attachment):
+def construct_vkscript_message_sender(
+        user_ids, access_token, api_version,
+        message, vk_attachment_id
+    ):
     params = {
         'user_ids': user_ids,
         'access_token': access_token,
@@ -18,8 +21,8 @@ def construct_vkscript_message_sender(user_ids, access_token, api_version, messa
     }
     if message is not None:
         params['message'] = message
-    if attachment is not None:
-        params['attachment'] = attachment
+    if vk_attachment_id is not None:
+        params['vk_attachment_id'] = vk_attachment_id
     return f'API.messages.send({json.dumps(params)})'
 
 def construct_code_for_execute(data):

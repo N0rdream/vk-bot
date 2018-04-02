@@ -16,7 +16,7 @@ def handle_request(request):
         return HttpResponse('Invalid incoming data', status=400)
     message_type = data['message_type']
     message = data['message']
-    date = data['date']
+    vk_timestamp = data['vk_timestamp']
     user_id = data['user_id']
     if data['secret'] != os.environ['VK_GROUP_SECRET_KEY']:
         return HttpResponse('Invalid secret key', status=403) 
@@ -27,14 +27,14 @@ def handle_request(request):
         if hashtag is None:
             handle_message_without_hashtag.delay(
                 message_type,
-                date,
+                vk_timestamp,
                 user_id,
                 message
             )
         else:
             handle_message_with_hashtag.delay(
                 message_type,
-                date,
+                vk_timestamp,
                 user_id,
                 message,
                 hashtag

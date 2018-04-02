@@ -5,6 +5,7 @@ from configurations import Configuration
 class Base(Configuration):
     
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 
     INSTALLED_APPS = [
         'django.contrib.admin',
@@ -91,8 +92,6 @@ class Hosting(Base):
     SECRET_KEY = os.environ['SECRET_KEY']
 
     DEBUG = True
-
-    STATIC_ROOT = '/home/nordream/vk/vk_bot_django/static/'
 
     DATABASES = {
         'default': {

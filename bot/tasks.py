@@ -2,7 +2,6 @@ import os
 import redis
 from celery import shared_task
 from .models import Hashtag, History
-from django.db.models import Q
 from celery.exceptions import Ignore
 from .parsers import parse_redis_data
 from .vk_helpers import (
@@ -13,18 +12,21 @@ from .vk_helpers import (
 
 
 @shared_task(ignore_result=True)
-def handle_message_without_hashtag(message_type, date, user_id, message):
-    History.save_message(message_type, date, user_id, message)
+def handle_message_without_hashtag(message_type, vk_timestamp, user_id, message):
+    History.save_message(message_type, vk_timestamp, user_id, message)
 
 @shared_task
-def handle_message_with_hashtag(message_type, date, user_id, message, hashtag):
+def handle_message_with_hashtag(message_type, vk_timestamp, user_id, message, hashtag):
     try:
         hashtag_obj = Hashtag.objects.get(name=hashtag)
-    except DoesNotExist:
-        History.save_message(message_type, date, user_id, message)
+    except Hashtag.DoesNotExist:
+        History.save_message(message_type, vk_timestamp, user_id, message)
         raise Ignore
-    History.save_message(message_type, date, user_id, message, hashtag_obj)
-    return {'user_id': user_id, 'date': date, 'hashtag': hashtag}
+    if History.has_hashtag(hashtag, user_id, vk_timestamp, os.environ['VK_ANSWER_TIMEOUT']):
+        History.save_message(message_type, vk_timestamp, user_id, message, hashtag_obj)
+        raise Ignore
+    History.save_message(message_type, vk_timestamp, user_id, message, hashtag_obj, answered=True)
+    return {'user_id': user_id, 'vk_timestamp': vk_timestamp, 'hashtag': hashtag}
 
 @shared_task(ignore_result=True)
 def send_hashtag_data():
