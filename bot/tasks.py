@@ -35,20 +35,21 @@ def send_hashtag_data():
     db = os.environ['CELERY_REDIS_DB']
     access_token = os.environ['VK_GROUP_ACCESS_TOKEN']
     api_version = os.environ['VK_API_VERSION']
+
     redis_db = redis.StrictRedis(host=host, port=port, db=db, decode_responses=True)
-    parsed_data = parse_redis_data(redis_db, 25, 100, 2500)
+    parsed_data = parse_redis_data(redis_db)
     if parsed_data is None:
         raise Ignore
     data = parsed_data['data']
     result = []
     for hashtag in data:
-        message, attachment = Hashtag.get_hashtag_fields(hashtag)
+        message, vk_attachment_id = Hashtag.get_hashtag_fields(hashtag)
         func = construct_vkscript_message_sender(
             data[hashtag], 
             access_token, 
             api_version, 
             message, 
-            attachment
+            vk_attachment_id
         )
         result.append(func)
     code = construct_code_for_execute(result)

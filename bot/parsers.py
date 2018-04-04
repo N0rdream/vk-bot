@@ -32,7 +32,7 @@ def process_incoming_data(data):
         result['user_id'] = user_id
     return result
 
-def parse_redis_data(redis_data, execute_limit, user_ids_limit, slice_size):
+def parse_redis_data(redis_data, execute_limit=25, user_ids_limit=100, slice_size=2500):
     keys = redis_data.keys()[:slice_size]
     if not keys:
         return None

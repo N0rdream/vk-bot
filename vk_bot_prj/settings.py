@@ -81,7 +81,7 @@ class Hosting(Base):
     ALLOWED_HOSTS = ['nordream.ru', 'www.nordream.ru', 'localhost']
     
     CELERY_IMPORTS = ['bot.tasks']
-    CELERY_BROKER_URL = 'amqp://localhost:5672//'
+    CELERY_BROKER_URL = os.environ['CELERY_BROKER_URL']
     CELERY_REDIS_HOST = os.environ['CELERY_REDIS_HOST']
     CELERY_REDIS_PORT = os.environ['CELERY_REDIS_PORT']
     CELERY_REDIS_DB = os.environ['CELERY_REDIS_DB']
