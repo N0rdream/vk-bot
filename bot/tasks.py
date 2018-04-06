@@ -17,9 +17,8 @@ def handle_message_without_hashtag(message_type, vk_timestamp, user_id, message)
 
 @shared_task
 def handle_message_with_hashtag(message_type, vk_timestamp, user_id, message, hashtag):
-    try:
-        hashtag_obj = Hashtag.objects.select_related().filter(name=hashtag).first()
-    except Hashtag.DoesNotExist:
+    hashtag_obj = Hashtag.objects.select_related().filter(name=hashtag).first()
+    if hashtag_obj is None:
         History.save_message(message_type, vk_timestamp, user_id, message)
         raise Ignore
     if History.has_hashtag(
@@ -57,7 +56,7 @@ def send_hashtag_data():
         for the_key in data:
             message, vk_attachment_id = the_key
             func = construct_vkscript_message_sender(
-                list(data[hashtag]), 
+                list(data[the_key]), 
                 access_token, 
                 api_version, 
                 message, 
@@ -65,7 +64,8 @@ def send_hashtag_data():
             )
             result.append(func)
         code = construct_code_for_execute(result)
-        send_execute_request(code, access_token, api_version)
+        #send_execute_request(code, access_token, api_version)
+        print(code)
     for k in parsed_data['checked_keys']:
         redis_db.delete(k)
 

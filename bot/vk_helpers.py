@@ -19,9 +19,9 @@ def construct_vkscript_message_sender(
         'access_token': access_token,
         'api_version': api_version,   
     }
-    if message is not None:
+    if message:
         params['message'] = message
-    if vk_attachment_id is not None:
+    if vk_attachment_id:
         params['attachment'] = vk_attachment_id
     return f'API.messages.send({json.dumps(params)})'
 
