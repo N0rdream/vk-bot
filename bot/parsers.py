@@ -1,5 +1,6 @@
 import re
 import json
+from collections import defaultdict
 
 
 def get_hashtag_from_message(message):
@@ -13,7 +14,7 @@ def process_incoming_data(data):
         message_type = data['type']
         secret = data['secret']
         group_id = data['group_id']
-    except KeyError:
+    except (KeyError, TypeError):
         return None
     result = {
         'message_type': message_type,
@@ -32,31 +33,29 @@ def process_incoming_data(data):
         result['user_id'] = user_id
     return result
 
-def parse_redis_data(redis_data, execute_limit=25, user_ids_limit=100, slice_size=2500):
-    keys = redis_data.keys()[:slice_size]
+def parse_redis_data(redis_data, execute_limit=25, user_ids_limit=100):
+    keys = redis_data.keys()
     if not keys:
         return None
     data = {}
-    checked_keys = []
-    broken_keys = []
+    checked_keys = set()
     for k in keys:
         record = json.loads(redis_data.get(k))
         try:
             hashtag = record['result']['hashtag']
-            user_id = str(record['result']['user_id'])
-        except KeyError:
-            broken_keys.append(k)
+            user_id = record['result']['user_id']
+        except (KeyError, TypeError):
+            checked_keys.add(k)
             continue
         if hashtag not in data:
             if len(data) < execute_limit:
-                data[hashtag] = [user_id]
-                checked_keys.append(k)
+                data[hashtag] = {user_id}
+                checked_keys.add(k)
         else:
             if len(data[hashtag]) < user_ids_limit:
-                data[hashtag].append(user_id)
-                checked_keys.append(k)
+                data[hashtag].add(user_id)
+                checked_keys.add(k)
     return {
         'data': data, 
-        'checked_keys': checked_keys, 
-        'broken_keys': broken_keys
+        'checked_keys': checked_keys
     }

@@ -22,7 +22,7 @@ def construct_vkscript_message_sender(
     if message is not None:
         params['message'] = message
     if vk_attachment_id is not None:
-        params['vk_attachment_id'] = vk_attachment_id
+        params['attachment'] = vk_attachment_id
     return f'API.messages.send({json.dumps(params)})'
 
 def construct_code_for_execute(data):

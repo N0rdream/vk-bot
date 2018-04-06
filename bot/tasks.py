@@ -41,19 +41,20 @@ def send_hashtag_data():
     if parsed_data is None:
         raise Ignore
     data = parsed_data['data']
-    result = []
-    for hashtag in data:
-        message, vk_attachment_id = Hashtag.get_hashtag_fields(hashtag)
-        func = construct_vkscript_message_sender(
-            data[hashtag], 
-            access_token, 
-            api_version, 
-            message, 
-            vk_attachment_id
-        )
-        result.append(func)
-    code = construct_code_for_execute(result)
-    send_execute_request(code, access_token, api_version)
+    if data:
+        result = []
+        for hashtag in data:
+            message, vk_attachment_id = Hashtag.get_hashtag_fields(hashtag)
+            func = construct_vkscript_message_sender(
+                list(data[hashtag]), 
+                access_token, 
+                api_version, 
+                message, 
+                vk_attachment_id
+            )
+            result.append(func)
+        code = construct_code_for_execute(result)
+        send_execute_request(code, access_token, api_version)
     for k in parsed_data['checked_keys']:
         redis_db.delete(k)
 
