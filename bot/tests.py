@@ -74,54 +74,54 @@ class ParseRedisDataTestCase(TestCase):
 
     def test_parsing_regular_data(self):
         data = {
-            'task_1': '{"result": {"hashtag": "test", "user_id": 1}}',
-            'task_2': '{"result": {"hashtag": "test", "user_id": 2}}'
+            'task_1': '{"result": {"message": "text", "vk_attachment_id": 1, "user_id": 1}}',
+            'task_2': '{"result": {"message": "text", "vk_attachment_id": 1, "user_id": 2}}',
         }
         actual_result = parse_redis_data(data)
         correct_result = {
-            'data': {'test': {1, 2}}, 
+            'data': {('text', 1): {1, 2}}, 
             'checked_keys': {'task_1', 'task_2'}
         }
         self.assertEqual(actual_result, correct_result)
 
     def test_parsing_with_user_ids_limit(self):
         data = {
-            'task_1': '{"result": {"hashtag": "test", "user_id": 1}}',
-            'task_2': '{"result": {"hashtag": "test", "user_id": 2}}',
-            'task_3': '{"result": {"hashtag": "test", "user_id": 3}}'
+            'task_1': '{"result": {"message": "text", "vk_attachment_id": 1, "user_id": 1}}',
+            'task_2': '{"result": {"message": "text", "vk_attachment_id": 1, "user_id": 2}}',
+            'task_3': '{"result": {"message": "text", "vk_attachment_id": 1, "user_id": 3}}',
         }
         actual_result = parse_redis_data(data, user_ids_limit=2)
         correct_results = [{
-            'data': {'test': {1, 2}}, 
+            'data': {('text', 1): {1, 2}}, 
             'checked_keys': {'task_1', 'task_2'}
         },
         {
-            'data': {'test': {2, 3}}, 
+            'data': {('text', 1): {2, 3}}, 
             'checked_keys': {'task_2', 'task_3'}
         },
         {
-            'data': {'test': {1, 3}}, 
+            'data': {('text', 1): {1, 3}}, 
             'checked_keys': {'task_1', 'task_3'}
         }]
         self.assertTrue(actual_result in correct_results)
 
     def test_parsing_with_execute_limit(self):
         data = {
-            'task_1': '{"result": {"hashtag": "one", "user_id": 1}}',
-            'task_2': '{"result": {"hashtag": "two", "user_id": 2}}',
-            'task_3': '{"result": {"hashtag": "three", "user_id": 3}}'
+            'task_1': '{"result": {"message": "one", "vk_attachment_id": 1, "user_id": 1}}',
+            'task_2': '{"result": {"message": "two", "vk_attachment_id": 2, "user_id": 2}}',
+            'task_3': '{"result": {"message": "three", "vk_attachment_id": 3, "user_id": 3}}',
         }
         actual_result = parse_redis_data(data, execute_limit=2)
         correct_results = [{
-            'data': {'one': {1}, 'two': {2}}, 
+            'data': {('one', 1): {1}, ('two', 2): {2}}, 
             'checked_keys': {'task_1', 'task_2'}
         },
         {
-            'data': {'two': {2}, 'three': {2}}, 
+            'data': {('two', 2): {2}, ('three', 3): {2}}, 
             'checked_keys': {'task_2', 'task_3'}
         },
         {
-            'data': {'one': {1}, 'three': {3}}, 
+            'data': {('one', 1): {1}, ('three', 3): {3}}, 
             'checked_keys': {'task_1', 'task_3'}
         }]
         self.assertTrue(actual_result in correct_results)

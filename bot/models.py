@@ -9,17 +9,6 @@ class Hashtag(models.Model):
     def __str__(self):
         return self.name
 
-    @classmethod
-    def get_hashtag_fields(cls, hashtag):
-        hashtag = cls.objects.select_related().filter(name=hashtag).first()
-        message = hashtag.message
-        vk_attachment_id = hashtag.vk_attachment_id
-        if not message:
-            return None, vk_attachment_id
-        if not vk_attachment_id:
-            return message, None
-        return message, vk_attachment_id
-
 
 class History(models.Model):
     message_type = models.CharField(max_length=50)

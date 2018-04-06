@@ -26,17 +26,10 @@ def handle_request(request):
         hashtag = get_hashtag_from_message(message)
         if hashtag is None:
             handle_message_without_hashtag.delay(
-                message_type,
-                vk_timestamp,
-                user_id,
-                message
+                message_type, vk_timestamp, user_id, message
             )
         else:
             handle_message_with_hashtag.delay(
-                message_type,
-                vk_timestamp,
-                user_id,
-                message,
-                hashtag
+                message_type, vk_timestamp, user_id, message, hashtag
             )
     return HttpResponse('ok', status=200)
