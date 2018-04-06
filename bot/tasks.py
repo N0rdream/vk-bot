@@ -64,8 +64,7 @@ def send_hashtag_data():
             )
             result.append(func)
         code = construct_code_for_execute(result)
-        #send_execute_request(code, access_token, api_version)
-        print(code)
+        send_execute_request(code, access_token, api_version)
     for k in parsed_data['checked_keys']:
         redis_db.delete(k)
 
