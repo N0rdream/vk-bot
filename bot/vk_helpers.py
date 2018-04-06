@@ -25,6 +25,20 @@ def construct_vkscript_message_sender(
         params['attachment'] = vk_attachment_id
     return f'API.messages.send({json.dumps(params)})'
 
-def construct_code_for_execute(data):
-    return ';'.join(data) + ';'
+def combine_lines_into_code(lines):
+    return ';'.join(lines) + ';'
+
+def get_code_for_execute(data, access_token, api_version):
+    lines = []
+    for k in data:
+        message, vk_attachment_id = k
+        line = construct_vkscript_message_sender(
+            list(data[k]), 
+            access_token, 
+            api_version, 
+            message, 
+            vk_attachment_id
+        )
+        lines.append(line)
+    return combine_lines_into_code(lines)
 

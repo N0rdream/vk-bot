@@ -4,7 +4,7 @@ from .parsers import (
     process_incoming_data,
     parse_redis_data
 )
-from .vk_helpers import construct_vkscript_message_sender
+from .vk_helpers import construct_vkscript_message_sender, get_code_for_execute
 
 
 class GetHashtagFromMessageTestCase(TestCase):
@@ -162,10 +162,34 @@ class ConstructVkscriptMessageSenderTestCase(TestCase):
         self.assertEqual(actual_result, correct_result)
 
 
+class GetCodeForExecuteTestCase(TestCase):
 
-
-
-
+    def test_get_code_for_execute(self):
+        data = {
+            ('msg_1', 'attch_1'): {1, 2, 3}, 
+            ('msg_2', 'attch_2'): {4, 5, 6, 7}
+        }
+        access_token = 'token'
+        api_version = '5.73'
+        actual_result = get_code_for_execute(data, access_token, api_version)
+        code_1 = 'API.messages.send({' \
+        '"user_ids": [1, 2, 3], ' \
+        '"access_token": "token", ' \
+        '"api_version": "5.73", ' \
+        '"message": "msg_1", ' \
+        '"attachment": "attch_1"' \
+        '})'
+        code_2 = 'API.messages.send({' \
+        '"user_ids": [4, 5, 6, 7], ' \
+        '"access_token": "token", ' \
+        '"api_version": "5.73", ' \
+        '"message": "msg_2", ' \
+        '"attachment": "attch_2"' \
+        '})'
+        correct_result_1 = code_1 + ';' + code_2 + ';'
+        correct_result_2 = code_2 + ';' + code_1 + ';'
+        correct_results = [correct_result_1, correct_result_2]
+        self.assertTrue(actual_result in correct_results)
 
 
 

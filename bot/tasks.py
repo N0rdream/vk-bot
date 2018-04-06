@@ -4,11 +4,7 @@ from celery import shared_task
 from .models import Hashtag, History
 from celery.exceptions import Ignore
 from .parsers import parse_redis_data
-from .vk_helpers import (
-    send_execute_request, 
-    construct_vkscript_message_sender, 
-    construct_code_for_execute
-)
+from .vk_helpers import send_execute_request, get_code_for_execute
 
 
 @shared_task(ignore_result=True)
@@ -45,25 +41,13 @@ def send_hashtag_data():
     db = os.environ['CELERY_REDIS_DB']
     access_token = os.environ['VK_GROUP_ACCESS_TOKEN']
     api_version = os.environ['VK_API_VERSION']
-
     redis_db = redis.StrictRedis(host=host, port=port, db=db, decode_responses=True)
     parsed_data = parse_redis_data(redis_db)
     if parsed_data is None:
         raise Ignore
     data = parsed_data['data']
     if data:
-        result = []
-        for the_key in data:
-            message, vk_attachment_id = the_key
-            func = construct_vkscript_message_sender(
-                list(data[the_key]), 
-                access_token, 
-                api_version, 
-                message, 
-                vk_attachment_id
-            )
-            result.append(func)
-        code = construct_code_for_execute(result)
+        code = get_code_for_execute(data, access_token, api_version)
         send_execute_request(code, access_token, api_version)
     for k in parsed_data['checked_keys']:
         redis_db.delete(k)
