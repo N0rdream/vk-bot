@@ -103,15 +103,24 @@ $ ./manage.py collectstatic
 
 Как запустить
 ----------
-Запуск приложения django:
+Запуск django посредством gunicorn:
 ```
 $ gunicorn --bind 0.0.0.0:8000 vk_bot_prj.wsgi
 ```
-Запуск менеджера очередей celery:
+Запуск celery и celerybeat:
 ```
 $ celery -A vk_bot_prj worker -B
 ```
+Информация для запуска gunicorn в качестве демона: http://docs.gunicorn.org/en/stable/deploy.html.  
+Информация для запуска celery и celerybeat в качестве демона: http://docs.celeryproject.org/en/latest/userguide/daemonizing.html.  
 
+
+Тесты
+----------
+Для запуска тестов перейдите в корневую директорию проекта и выполните следующую команду:
+```
+$ pytest
+```
 
 После запуска
 ----------
