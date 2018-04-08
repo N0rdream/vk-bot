@@ -125,3 +125,7 @@ def test_parsing_incorrect_data():
         'checked_keys': {'task_1', 'task_2', 'task_3'}
     }
     assert actual_result == expected_result
+
+def test_parsing_empty_data():
+    assert parse_redis_data({}) is None
+    
